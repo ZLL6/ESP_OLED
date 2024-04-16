@@ -1,0 +1,31 @@
+{
+    "files.associations": {
+        "sdkconfig.h": "c",
+        "i2c.h": "c",
+        "i2c_types.h": "c",
+        "esp_err.h": "c",
+        "esp_log.h": "c",
+        "gpio_types.h": "c",
+        "esp_spi_flash.h": "c",
+        "*.inc": "c",
+        "oledfont.h": "c",
+        "*.ipp": "c",
+        "oled.h": "c",
+        "global.h": "c",
+        "string.h": "c",
+        "esp_wifi_default.h": "c",
+        "freertos.h": "c",
+        "sockets.h": "c",
+        "spi_common.h": "c",
+        "uart.h": "c",
+        "task.h": "c",
+        "queue.h": "c",
+        "webserver.h": "c",
+        "cjson.h": "c",
+        "typecovert.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled",
+    "cmake.configureOnOpen": true,
+    "C_Cpp.autocompleteAddParentheses": true,
+    "C_Cpp.default.compilerPath": ""
+}

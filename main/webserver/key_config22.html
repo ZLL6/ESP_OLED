@@ -1,0 +1,857 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>非接触梯控v3.0</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<script type="text/javascript">
+		var btnConfiging = 0;//是否正在配置,1为正在配置
+		var boot_count = 0;
+		var use_count_total = 0;
+		var current_btnNum = 0;
+		var btnNum_floor = 0;
+		var btnNum_attr = 0;
+		var all_floor_num = 0;
+		//生成按键布局
+		function createBtn(num){
+			$('#add').empty();
+			for (var i = 1; i <= num; i++) {
+				$('#add').append('<input style="font-size:50px" class="inp" type="button" id="Submit' + i + '" value=' + i + ' onclick="selectBtn(this.value,0);"/>')
+				if (i % 9 == 0) {
+					$('#add').append('<br/>')
+				}
+			}
+		}
+		function contralDisplayHiden(){
+			a_floor_num = $("#floor_num").val();
+			console.log("a_floor_num   .."+ a_floor_num);
+			for(var i = 1; i <= a_floor_num; i++){
+				objIdName = "fl_threshold"+i;
+				var obj = document.getElementById(objIdName);
+				console.log("getElementById   .."+ objIdName);
+				obj.hidden = false;
+			}
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:'{"meth":"getKeyThreshold"}',
+				success:function(obj){
+				    for(var i = 0; i < obj.threshold.length; i++){
+						if(obj.threshold[i]!=0){
+						objInputName = "floor_threshold"+i;
+						var inobj = document.getElementById(objInputName);
+						inobj.value = obj.threshold[i];
+						console.log("obj.threshold[i]   .."+ obj.threshold[i]);
+						}
+					}
+				}
+			});
+		}
+		
+		// 生成按键布局
+		function createBtnLayout() {
+			all_floor_num = $("#floor_num").val();
+			createBtn(all_floor_num);
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:'{"meth":"inquirefloorConfig","floor_cnt":'+all_floor_num+'}',
+				success:function(obj){
+				//如果返回的按键总数> web输入的数量，补足
+					if(obj.floor[obj.floor.length-1] > $("#floor_num").val()){
+						createBtn(obj.floor[obj.floor.length-1]);
+						}
+					for(var i = 0; i < obj.floor.length; i++){
+						if(obj.floor[i]!=0)
+							btnColorwithdraw("Submit" + obj.floor[i]);
+					}
+					//如果以前配置过该按键（返回的按键值匹配）， 变绿色
+					if(obj.floor.length != 0){
+						for(var i = 0; i < obj.floor.length; i++){
+							if(obj.floor[i]!=0)
+								btnColorGren("Submit" + obj.floor[i]);
+						}
+					}
+				},
+			});
+		
+		}
+
+		function btnColorGren(str) {
+			var obj = document.getElementById(str);
+			obj.style.background = "#428e23";//绿色
+		}
+		function btnColorwithdraw(str) {
+			var obj = document.getElementById(str);
+			obj.style.background = "#88c4ca"; //默认色
+		}
+		function btnColorBlue(str) {
+			var obj = document.getElementById(str);
+			obj.style.background = "#000080"; //蓝色色
+		}
+		function btnColor_withoutdraw(str) {
+			var obj = document.getElementById(str);
+			obj.style.background = "transparent"; //默认色
+		}
+		function set_btn_value(str, val) {
+			var obj = document.getElementById(str);
+			obj.value = val;
+		}
+		function get_btn_value(str) {
+			var obj = document.getElementById(str);
+			return obj.value;
+		}
+		function set_user_message(str) {
+			var obj = document.getElementById("UIstatus");
+			obj.innerHTML="当前操作: <span style=\"color:red;\">" + str +"</span>";
+		}
+		
+
+		// 选择按键进行配置
+		function selectBtn(btnNum,attr) {
+			var withdraw = false;
+			if(btnConfiging == 1){
+				if(( current_btnNum!=btnNum )&&(current_btnNum!=0)){
+					withdraw=alert("按键 ["+current_btnNum+"] 正在配置，请不要按其它按键");
+					return;
+				}
+				else{ 
+					withdraw=confirm("按键 ["+btnNum+"] 正在配置，是否取消当前按键配置");
+					if (withdraw==false){
+						return;
+					} 
+
+				}
+			}
+			btnNum_attr = attr;
+			btnNum_floor = btnNum;
+			// withdraw = true : 正在配置中的，可以取消
+			var dataBuf = '{"meth":"floorConfig","btn":'+btnNum+',"special_button":' + attr +',"withdraw":' + withdraw +'}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						if(obj.rt == 1){//已经配置  正常是 1
+							var se=confirm(" key "+btnNum+ "已经配置过，是否撤销");
+							if (se==false){
+								return;
+							}
+							floorConfigCancel(1,btnNum,attr);
+							btnConfiging = 0;
+							current_btnNum =0;
+							return ;
+						}else if(obj.rt == -1){//已经配置  正常是 1
+							btnConfiging = 0;
+							current_btnNum =0;
+							alert(" key "+btnNum+ "配置超时,请在10秒内完成配置");
+							return ;
+						}
+						else{
+							if(withdraw == false){
+								btnConfiging = 1;
+								current_btnNum = btnNum;
+								waitBtnConfig();
+								
+							}else 
+								btnConfiging =0;
+							current_btnNum = btnNum;
+							
+						}
+					},
+					error:function(){
+						btnConfiging = 0;
+						current_btnNum =0;
+						alert("配置出错");
+					}
+				}
+			);
+		}
+		function floorConfigCancel(flag,btnNum,attr){				
+			var keystr = "Submit" + btnNum;
+			btnColor_withoutdraw(keystr);
+			//document.getElementById(keystr).value			
+		
+			var dataBuf = '{"meth":"floorConfigCancel","withdraw_flag":' + flag + ',"btn":'+btnNum+ ',"special_button":'+attr+'}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						if(1 == obj.rt) {
+							if(flag == 1){
+								alert("撤销成功");
+							}
+								
+							if(flag == 2){
+								alert("重置成功");
+							}
+							createBtnLayout();
+						}
+					},
+					error:function(){
+						btnConfiging = 0;
+						current_btnNum =0;
+						if(flag == 1){
+							alert("撤销失败");
+						}
+						if(flag == 2)
+							alert("重置失败");
+					}
+				}
+			);
+		}
+
+		function waitBtnConfig() {
+			// 发消息查询按键是否配置成功，不成功继续发消息，成功的话设置为绿色并弹框提示
+			var dataBuf = '{"meth":"waitBtnConfig" ,"btn":'+current_btnNum+ '}';
+			var err_flag = 0;
+			set_user_message("正在配置楼层->"+current_btnNum+"<-，请等待");
+			if(btnConfiging == 0)
+				return;
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						if(obj.result == 0){
+							 setTimeout(function(){waitBtnConfig();},500);
+							 //set_user_message("楼层->"+current_btnNum+"< 配置中，请稍等...");
+						}
+						else if(obj.result == 1){
+							btnConfiging = 0;							
+							createBtnLayout();
+							set_user_message("楼层->"+current_btnNum+"<配置成功");
+							alert("楼层->"+current_btnNum+"<配置成功!");
+							current_btnNum =0 ;
+						}
+						else if(obj.result == 2){
+							alert(obj.reason);
+							btnConfiging = 0;
+							err_flag = 1;
+							set_user_message("楼层->"+current_btnNum+"<配置错误，超时");
+							alert("楼层->"+current_btnNum+"<配置超时!");
+							current_btnNum =0 ;
+						}
+						else if(obj.result == 3){
+							btnConfiging = 0;
+							current_btnNum =0;
+						}
+
+						if(err_flag == 1){
+							if(btnNum_floor != 0){//橘色
+								document.getElementById("Submit" + btnNum_floor).style.background = "#DC511D";
+							}
+						}
+					},
+					error:function(){
+						btnConfiging = 0;
+						current_btnNum =0;
+						alert("配置出错");
+					}
+				}
+			);
+		}
+
+		function GetFloorCfg() {
+			// 发消息查询按键是否配置成功，不成功继续发消息，成功的话设置为绿色并弹框提示
+			var dataBuf = '{"meth":"GetFloorCfg"}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						$("#floor_num").val(obj.floor_num);
+						createBtnLayout();
+					},
+					error:function(){
+						alert("GetFloorCfg config failed");
+					}
+				}
+			);
+		}
+		function setFloorCounter(){
+			// 发消息查询按键是否配置成功，不成功继续发消息，成功的话设置为绿色并弹框提示
+			var dataBuf = '{"meth":"setFloorNum", "floor_num":'+ $("#floor_num").val()+'}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						createBtnLayout();
+					},
+					error:function(){
+						alert("setFloorNum err failed");
+					}
+				}
+			);
+		}
+		function setConfigEvent(config_type){
+			// 发消息查询按键是否配置成功，不成功继续发消息，成功的话设置为绿色并弹框提示
+			if(config_type==2){
+				var reCheck=confirm("警告：配置全部清除后将不可恢复，您确认进行本次操作？");
+				if (reCheck==false){
+					return;
+				} 
+			}
+			if(config_type==0){//退出按键配置操作
+				current_btnNum = 0;
+				btnConfiging = 0;
+			}
+			if(config_type==3){//退出按键配置操作
+				current_btnNum = 0;
+				btnConfiging = 0;
+				//createThresholdBtnLayout();
+				//return ;
+			}
+			
+			var dataBuf = '{"meth":"setConfigEvent","config_type":'+config_type+'}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						//alert("success");
+						if(config_type == 2)
+							createBtnLayout();
+						if(config_type == 3){
+							alert("...保存成功!...");
+						}
+					},
+					error:function(){
+						confirm(" setConfigEvent failed！");
+					}
+				}
+			);
+		}
+		function setKeyThreshold(key_num, op_type)
+		{ //op_type=0,自动较准， op_type=1 设置较准值
+			objIdName = "#floor_threshold"+key_num;
+			var dataBuf = '{"meth":"setKeyThreshold","key_num":'+key_num+ ',"op_type":'+op_type+',"k_threshold":'+$(objIdName).val()+'}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						if(1 == obj.rt){
+							if( op_type ==0 )
+								$(objIdName).val(obj.floor_threshold);
+							//var obj = document.getElementById(objIdName);
+							//obj.value = obj.threshold
+							alert("...配置成功!...");
+						}else 
+						   alert("...配置超时，请在10秒内完成配置!...");
+					},
+					error:function(){
+						alert("...配置失败!...");
+					}
+				}
+			);
+		}
+		function setOtherSystem()
+		{		//buzzer_off pwm_off
+			var dataBuf = '{"meth":"setOtherSystem","ele_duration":'+ $("#ele_duration").val()+',"simple_per":'+ 
+				$("#simple_per").val()+', "force_check_off":'+ $("#force_check_off").val()+',"light_duration":'+ 
+				$("#light_duration").val()+',"delayMS":'+ $("#delayMS").val()+',"buzzer_off":'+ $("#buzzer_off").val()+
+				',"pwm_off":'+ $("#pwm_off").val()+'}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						if(1 == obj.rt){
+							alert("...配置成功!,系统将重启...");
+						}
+					},
+					error:function(){
+						alert("...配置失败!...");
+					}
+				}
+			);
+		}
+		function getOtherSystem()
+		{		
+			var dataBuf = '{"meth":"getOtherSystem"}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						$("#ele_duration").val(obj.ele_duration);
+						$("#simple_per").val(obj.simple_per);
+						$("#force_check_off").val(obj.force_check_off);
+						$("#light_duration").val(obj.light_duration);
+						$("#buzzer_off").val(obj.buzzer_off);
+						$("#pwm_off").val(obj.pwm_off);
+						$("#delayMS").val(obj.delayMS);
+						$("#all_key_event").val(obj.all_key_event);
+						
+					},
+					error:function(){
+						alert("...配置失败!...");
+					}
+				}
+			);
+		}
+		function SystemEvent(event)
+		{	//event =1 重启系统， event=0 查询版本
+			var dataBuf = '{"meth":"SystemEvent", "event":'+event +'}';
+			$.ajax({type:"POST",url:"/api/",contentType:"application/json",dataType:"json",data:dataBuf,
+					success:function(obj){
+						if(event == 0){
+							$("#soft_ver").val(obj.soft_ver);
+						}
+						else{
+							alert("...即将重启，需要重新登录本页面!...");
+							self.location = '/'; 
+						}
+					},
+					error:function(){
+						alert("...配置失败!...");
+					}
+				}
+			);
+		}
+		function DevUpgrade() {
+			var tn = document.getElementById("file").value;
+			var seat = tn.lastIndexOf(".");
+			var extension = tn.substring(seat).toLowerCase();
+			if (extension != ".bin") { alert("不支持的文件格式！"); return false; }
+			var formData = new FormData();
+			formData.append('file', $('#file')[0].files[0]);
+			$.ajax({
+				type: "POST", url: "/ota/", cache: false, data: formData, processData: false, contentType: false,
+				xhr: function () {
+					var xhr = $.ajaxSettings.xhr();
+					if (onprogress && xhr.upload) {
+						xhr.upload.addEventListener("progress", onprogress, false);
+						xhr.addEventListener("load", uploadComplete, false);
+						return xhr;
+					}
+				}
+			}).fail(function (res) { alert("升级失败！"); });
+		}
+		function onprogress(evt) { var per = 100 * evt.loaded / evt.total; per = per.toFixed(1); $("#up_pro")[0].innerHTML = (per + "%"); $("#up_pro")[0].style.width = (per + "%"); }
+		function uploadComplete(evt) { setTimeout("alert('升级成功,设备重启中')", 1000); self.location = '/'; }
+	</script>
+
+<style type="text/css">
+	.tab-wrap {
+		margin: 40px 0px;
+		border-radius: 6px;
+		transition: box-shadow 0.3s;
+		display: flex;
+		position: relative;
+		max-width: 100%;
+		box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.24);
+		flex-wrap: wrap;
+		background-color: #FFFFFF;
+	}
+
+	.tab-wrap:hover {
+		box-shadow: 0px 12px 23px rgba(0, 0, 0, 0.23), 0px 10px 10px rgba(0, 0, 0, 0.19);
+	}
+
+	.tab {
+		display: none;
+	}
+
+	:checked:nth-of-type(1).tab~ :nth-of-type(1).tab__content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+
+	:checked:nth-of-type(2).tab~ :nth-of-type(2).tab__content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+	
+	:checked:nth-of-type(3).tab~ :nth-of-type(3).tab__content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+	:checked:nth-of-type(4).tab~ :nth-of-type(4).tab__content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+
+	:first-of-type:not(:last-of-type).tab+label {
+		border-top-right-radius: 0px;
+		border-bottom-right-radius: 0px;
+	}
+
+	:not(:first-of-type):not(:last-of-type).tab+label {
+		border-radius: 0px;
+	}
+
+	:last-of-type:not(:first-of-type).tab+label {
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
+	}
+
+	:checked.tab+label {
+		cursor: default;
+		box-shadow: inset 0px -1px 0px #fff;
+		background-color: #FFFFFF;
+	}
+
+	:checked.tab+label:hover {
+		box-shadow: inset 0px -1px 0px #fff;
+		background-color: #FFFFFF;
+	}
+
+	.tab+label {
+		padding: 15px;
+		border-radius: 6px 6px 0px 0px;
+		transition: background-color 0.3s, box-shadow 0.3s;
+		height: 50px;
+		text-align: center;
+		color: #333333;
+		text-decoration: none;
+		display: block;
+		cursor: pointer;
+		box-sizing: border-box;
+		box-shadow: inset 0px -1px 0px #eee;
+		flex-grow: 3;
+		background-color: #eaeaea;
+		user-select: none;
+	}
+
+	.tab+label:hover {
+		box-shadow: inset 0px 1px 0px #f4f4f4;
+		background-color: #F9F9F9;
+	}
+
+	.tab__content {
+		border-radius: 6px;
+		left: 0px;
+		width: 100%;
+		position: absolute;
+		z-index: -1;
+		background-color: transparent;
+		display: none;
+	}
+
+	body {
+		font-family: "Microsoft YaHei", sans-serif;
+		background-color: #E7E7E7;
+	}
+
+	.container {
+		margin: 0px auto;
+		display: block;
+		max-width: 1280px;
+		min-width: 850px;
+	}
+
+	.container>*:not(.tab-wrap) {
+		padding: 0px 80px;
+	}
+
+
+	p {
+		line-height: 1.6;
+		margin-bottom: 20px;
+	}
+
+	form {
+		background: #eaeaea;
+		-webkit-border-radius: 8px;
+		border-radius: 8px;
+		padding: 15px;
+		width: auto;
+		margin: 15px;
+	}
+
+	form fieldset {
+		border: none;
+	}
+
+	legend {
+		color: #000000;
+		font-size: 18px;
+		font-weight: bold;
+		text-shadow: 0 1px 1px #C0C0C0;
+	}
+
+	form fieldset fieldset legend {
+		color: #111111;
+		font-size: 15px;
+		font-weight: normal;
+		padding-bottom: 0;
+	}
+
+	form ol {
+		padding-left: 20px;
+		padding-right: 20px;
+		-webkit-padding-left: 20px;
+		-webkit-padding-right: 20px;
+	}
+
+	form ol li {
+		background: rgba(255, 255, 255, 0.6);
+		border-radius: 5px;
+		-webkit-border-radius: 5px;
+		line-height: 30px;
+		list-style: none;
+		padding: 5px 10px;
+		margin-bottom: 4px;
+		height: 30px;
+	}
+
+	form ol li span {
+		float: right;
+	}
+
+	form label {
+		float: left;
+		font-size: 15px;
+		padding: 2px;
+		width: 300px;
+	}
+
+	form input {
+		background: #ffffff;
+		border: #88c4ca solid 1px;
+		border-radius: 3px;
+		-webkit-border-radius: 3px;
+		font-size: 15px;
+		outline: none;
+		padding: 5px;
+		width: 210px;
+	}
+
+	form select {
+		font-size: 15px;
+		width: 210px;
+		padding: 5px;
+		border-radius: 3px;
+		-webkit-border-radius: 3px;
+		border: #88c4ca solid 1px;
+	}
+
+	form input:not([type=submit]):focus {
+		background: #eaeaea;
+		border: #88c4ca solid 2px;
+	}
+
+	form input[type=button] {
+		background: #88c4ca;
+	}
+
+	.progress {
+		overflow: hidden;
+		height: 30px;
+		width: 210px;
+		background-color: #f7f7f7;
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#D3D3D3), to(#DCDCDC));
+		background-image: -webkit-linear-gradient(top, #D3D3D3, #DCDCDC);
+		background-image: linear-gradient(to bottom, #D3D3D3, #DCDCDC);
+		background-repeat: repeat-x;
+		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff5f5f5', endColorstr='#fff9f9f9', GradientType=0);
+		-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+		-webkit-border-radius: 4px;
+		border-radius: 4px;
+	}
+
+	.progress .bar {
+		height: 100%;
+		color: #000000;
+		float: left;
+		font-size: 14px;
+		text-align: center;
+		justify-content: center;
+		text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+		background-color: #0e90d2;
+		background-image: -moz-linear-gradient(top, #149bdf, #0480be);
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#149bdf), to(#0480be));
+		background-image: -webkit-linear-gradient(top, #149bdf, #0480be);
+		background-image: -o-linear-gradient(top, #149bdf, #0480be);
+		background-image: linear-gradient(to bottom, #149bdf, #0480be);
+		background-repeat: repeat-x;
+		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff149bdf', endColorstr='#ff0480be', GradientType=0);
+		-webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+		box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+		-webkit-box-sizing: border-box;
+		box-sizing: border-box;
+		-webkit-transition: width 0.1s ease;
+		transition: width 0.1s ease;
+	}
+
+	.inp {
+        border: none;
+        border-radius: 100%;
+        background: #cacaca;
+        width: 100px;
+        height: 100px;
+        margin: 5px 8px;
+    }
+
+	.ledstyle {
+
+		width:10.6px;
+		height:15px;
+
+		line-height:15px;
+
+		-webkit-border: #000000d3 solid 1px;
+		border: #000000d3 solid 1px;
+		
+
+		margin:1px;
+
+		padding:0px;
+
+		-webkit-background-color:grey;
+		background-color:grey;
+
+		-webkit-border-radius: 0px;
+		border-radius: 0px;
+
+		-webkit-background: grey;
+		background: grey;
+
+	}
+
+</style>
+</head>
+<body>
+	<div class="container">
+		<div class="tab-wrap">
+			<input type="radio" id="tab1" name="tabGroup1" class="tab" onclick="GetFloorCfg()">
+			<label for="tab1"><legend>楼层按键配置</legend></label>
+			<input type="radio" id="tab2" name="tabGroup1" class="tab" onclick="getOtherSystem()">
+			<label for="tab2"><legend>系统参数配置</legend></label>			
+			<input type="radio" id="tab3" name="tabGroup1" class="tab" onclick="SystemEvent(0)">
+			<label for="tab3"><legend>系统升级</legend></label>		
+			<div class="tab__content">
+				<form id="internalCfg">
+				<fieldset>					
+					<ol>
+					    <li style="text-align:center">
+							<input  type="number" id="floor_num" max="16" min="1" step="1" value="3" onchange="if(value<1)value=1;if(value>16)value=16;createBtnLayout()">
+							<input type="button" value="提交按键数量" onclick="setFloorCounter()" />
+							
+						</li>
+						<li style="text-align:center">
+							<div id="UIstatus" align="center"></div>
+						</li>
+						<li style="text-align:center">
+							<input type="button" value="进入按键配置模式" onclick="setConfigEvent(1)" />
+						</li>
+					</ol>
+					<ol>
+						<div style='text-align: center'>
+							<p id="add"></p>		
+						</div>
+					</ol>					
+					<ol>
+						<li style="text-align:center">
+							<input type="button" value="阈值配置模式" onclick="contralDisplayHiden()"/>	
+						</li>
+						<li style="text-align:center" id="fl_threshold1" hidden>
+							<input  type="number" id="floor_threshold1" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键1自动校准" onclick="setKeyThreshold(1, 0)" />
+							<input type="button" value="按键1灵敏度设置" onclick="setKeyThreshold(1, 1)" />						
+						</li>
+						<li style="text-align:center" id="fl_threshold2" hidden>
+							<input  type="number" id="floor_threshold2" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键2自动校准" onclick="setKeyThreshold(2, 0)" />
+							<input type="button" value="按键2灵敏度设置" onclick="setKeyThreshold(2, 1)" />						
+						</li>
+						<li style="text-align:center" id="fl_threshold3" hidden>
+							<input  type="number" id="floor_threshold3" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键3自动校准" onclick="setKeyThreshold(3, 0)" />
+							<input type="button" value="按键3灵敏度设置" onclick="setKeyThreshold(3, 1)" />						
+						</li>
+						<li style="text-align:center" id="fl_threshold4" hidden>
+							<input  type="number" id="floor_threshold4" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键4自动校准" onclick="setKeyThreshold(4, 0)" />
+							<input type="button" value="按键4灵敏度设置" onclick="setKeyThreshold(4, 1)" />							
+						</li>
+						<li style="text-align:center" id="fl_threshold5" hidden>
+							<input  type="number" id="floor_threshold5" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键5自动校准" onclick="setKeyThreshold(5, 0)" />
+							<input type="button" value="按键5灵敏度设置" onclick="setKeyThreshold(5, 1)" />							
+						</li>
+						<li style="text-align:center" id="fl_threshold6" hidden>
+							<input  type="number" id="floor_threshold6" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键6自动校准" onclick="setKeyThreshold(6, 0)" />
+							<input type="button" value="按键6灵敏度设置" onclick="setKeyThreshold(6, 1)" />							
+						</li>
+						<li style="text-align:center" id="fl_threshold7" hidden>
+							<input  type="number" id="floor_threshold7" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键7自动校准" onclick="setKeyThreshold(7, 0)" />
+							<input type="button" value="按键7灵敏度设置" onclick="setKeyThreshold(7, 1)" />							
+						</li>
+						<li style="text-align:center" id="fl_threshold8" hidden>
+							<input  type="number" id="floor_threshold8" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键8自动校准" onclick="setKeyThreshold(8, 0)" />
+							<input type="button" value="按键8灵敏度设置" onclick="setKeyThreshold(8, 1)" />							
+						</li>
+						<li style="text-align:center" id="fl_threshold9" hidden>
+							<input  type="number" id="floor_threshold9" max="3000" min="500" step="10" value="1000" onchange="if(value<500)value=500;">
+							<input type="button" value="按键9自动校准" onclick="setKeyThreshold(9, 0)" />
+							<input type="button" value="按键9灵敏度设置" onclick="setKeyThreshold(9, 1)" />					
+						</li>
+					</ol>
+					<ol>
+						<li style="text-align:center">
+							<input type="button" value="清除所有配置" onclick="setConfigEvent(2)" />	
+							<input type="button" value="保存并退出配置模式" onclick="setConfigEvent(3)" />	
+						</li>
+					</ol>
+				</fieldset>
+				</form>					
+			</div>
+			
+			
+			<div class="tab__content">
+				<form>
+					<fieldset>
+						<legend>系统配置</legend>						
+						<ol>
+						<li><label>梯控继电器输出持续时间(单位：ms)：</label>
+							<span><input  type="number" id="ele_duration" max="5000" min="10" step="10" value="200" onchange="if(value<10)value=10"></span>
+						</li>
+						<li><label>每次测量采样次数:</label>
+							<span><input  type="number" id="simple_per" max="1000" min="4" step="2" value="16" onchange="if(value<4)value=4;">
+							</span>
+						</li>
+						<li><label>每次采样时间间隔:</label>
+							<span><input  type="number" id="delayMS" max="1000" min="10" step="2" value="20" onchange="if(value<4)value=4;">
+							</span>
+						</li>
+						<li><label>按键灯点亮持续时间(单位：MS):</label>
+							<span><input  type="number" id="light_duration" max="10000" min="500" step="10" value="2000" onchange="if(value<4)value=4;"></span>
+						</li>
+						<li><label>是否开启蜂鸣器:</label>
+							<span><select id="buzzer_off">
+								<option value="1" selected="selected">是</option>
+								<option value="0" >否</option>
+								</select></span>
+						</li>
+						<li><label>是否开启呼吸灯:</label>
+							<span><select id="pwm_off">
+								<option value="1" selected="selected">是</option>
+								<option value="0" >否</option>
+								</select></span>
+						</li>
+						<li><label>是否关闭误触检测:</label>
+							<span><select id="force_check_off">
+								<option value="1" >是</option>
+								<option value="0" selected="selected">否</option>
+								</select></span>
+						</li>
+						<li style="text-align:center">
+							<input type="button" value="提交" onclick="setOtherSystem()"/>
+						</li>
+						<li style="text-align:center">
+							<input type="button" value="系统重启" onclick="SystemEvent(1)"/>
+						</li>
+						<li><label>累计按键次数:</label>
+							<span><input  type="number" id="all_key_event" value="20"></span>
+						</li>
+					</ol>
+				</fieldset>
+				</form>
+			</div>
+			<div class="tab__content">
+				<form><fieldset><legend>固件升级</legend>
+					<ol>
+						<li><label>固件版本：</label><span>
+								<input  type="text" id="soft_ver" value="20"></span>
+							</span>
+						</li>
+						<li><label>升级文件：</label><span><input id="file" type="file" name="file" /></span></li>
+						<li><label>升级进度：</label><span>
+								<div class="progress">
+									<div id="up_pro" class="bar" style="width:0%;">0.0%</div>
+								</div>
+							</span></li>
+						<li style="text-align:center"><input type="button" value="升级" onclick="DevUpgrade()" /></li>
+					</ol></fieldset></form>
+			</div>
+			
+			
+		</div>
+	</div>
+
+</body>
+
+</html>

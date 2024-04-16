@@ -1,0 +1,1 @@
+cmd='C:/Users/MrZho/.espressif/tools/cmake/3.16.4/bin/cmake.exe;-DSDKCONFIG=E:/ESP/OLED/sdkconfig;-DIDF_PATH=C:/ESP_IDF;-DIDF_TARGET=esp32;-DPYTHON_DEPS_CHECKED=1;-DPYTHON=C:/Users/MrZho/.espressif/python_env/idf4.3_py3.8_env/Scripts/python.exe;-DEXTRA_COMPONENT_DIRS=E:/ESP/OLED/components/bootloader;-DLEGACY_INCLUDE_COMMON_HEADERS=;-GNinja;<SOURCE_DIR><SOURCE_SUBDIR>'

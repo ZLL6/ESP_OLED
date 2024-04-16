@@ -1,0 +1,4 @@
+source "E:/ESP/OLED/components/app_update/Kconfig.projbuild"
+source "E:/ESP/OLED/components/bootloader/Kconfig.projbuild"
+source "E:/ESP/OLED/components/esptool_py/Kconfig.projbuild"
+source "E:/ESP/OLED/components/partition_table/Kconfig.projbuild"

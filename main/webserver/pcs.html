@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid PCS</title>
+</head>
+<style type="text/css">
+	.tab-wrap {
+		margin: 40px 0px;
+		border-radius: 6px;
+		transition: box-shadow 0.3s;
+		display: flex;
+		position: relative;
+		max-width: 100%;
+		box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.24);
+		flex-wrap: wrap;
+		background-color: #FFFFFF;
+	}
+
+	.tab-wrap:hover {
+		box-shadow: 0px 12px 23px rgba(0, 0, 0, 0.23), 0px 10px 10px rgba(0, 0, 0, 0.19);
+	}
+
+	.tab {
+		display: none;
+	}
+
+	:checked:nth-of-type(1).tab~ :nth-of-type(1).tab_content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+
+	:checked:nth-of-type(2).tab~ :nth-of-type(2).tab_content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+	
+	:checked:nth-of-type(3).tab~ :nth-of-type(3).tab_content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+	:checked:nth-of-type(4).tab~ :nth-of-type(4).tab_content {
+		top: 0px;
+		position: relative;
+		z-index: 100;
+		display: block;
+	}
+
+	:first-of-type:not(:last-of-type).tab+label {
+		border-top-right-radius: 0px;
+		border-bottom-right-radius: 0px;
+	}
+
+	:not(:first-of-type):not(:last-of-type).tab+label {
+		border-radius: 0px;
+	}
+
+	:last-of-type:not(:first-of-type).tab+label {
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
+	}
+
+	:checked.tab+label {
+		cursor: default;
+		box-shadow: inset 0px -1px 0px #fff;
+		background-color: #FFFFFF;
+	}
+
+	:checked.tab+label:hover {
+		box-shadow: inset 0px -1px 0px #fff;
+		background-color: #FFFFFF;
+	}
+
+	.tab+label {
+		padding: 15px;
+		border-radius: 6px 6px 0px 0px;
+		transition: background-color 0.3s, box-shadow 0.3s;
+		height: 50px;
+		text-align: center;
+		color: #333333;
+		text-decoration: none;
+		display: block;
+		cursor: pointer;
+		box-sizing: border-box;
+		box-shadow: inset 0px -1px 0px #eee;
+		flex-grow: 3;
+		background-color: #eaeaea;
+		user-select: none;
+	}
+
+	.tab+label:hover {
+		box-shadow: inset 0px 1px 0px #f4f4f4;
+		background-color: #F9F9F9;
+	}
+
+	.tab_content {
+		border-radius: 6px;
+		left: 0px;
+		width: 100%;
+		position: absolute;
+		z-index: -1;
+		background-color: transparent;
+		display: none;
+	}
+
+	body {
+		font-family: "Microsoft YaHei", sans-serif;
+		background-color: #E7E7E7;
+	}
+
+	.container {
+		margin: 0px auto;
+		display: block;
+		width: 100%;
+	}
+
+	.container>*:not(.tab-wrap) {
+		padding: 0px 80px;
+	}
+
+
+	p {
+		line-height: 1.6;
+		margin-bottom: 20px;
+	}
+
+	form {
+		background: #eaeaea;
+		-webkit-border-radius: 8px;
+		border-radius: 8px;
+		padding: 15px;
+		width: auto;
+		margin: 15px;
+	}
+
+	form fieldset {
+		border: none;
+	}
+
+	legend {
+		color: #000000;
+		font-size: 18px;
+		font-weight: bold;
+		text-shadow: 0 1px 1px #C0C0C0;
+	}
+
+	form fieldset fieldset legend {
+		color: #111111;
+		font-size: 15px;
+		font-weight: normal;
+		padding-bottom: 0;
+	}
+
+	form ol {
+		padding-left: 20px;
+		padding-right: 20px;
+		-webkit-padding-left: 20px;
+		-webkit-padding-right: 20px;
+	}
+
+	form ol li {
+		background: rgba(255, 255, 255, 0.6);
+		border-radius: 5px;
+		-webkit-border-radius: 5px;
+		line-height: 30px;
+		list-style: none;
+		padding: 5px 10px;
+		margin-bottom: 4px;
+		height: 30px;
+	}
+
+	form ol li span {
+		float: right;
+	}
+
+	form label {
+		float: left;
+		font-size: 15px;
+		padding: 2px;
+	}
+
+	form input {
+		background: #ffffff;
+		border: #88c4ca solid 1px;
+		border-radius: 3px;
+		-webkit-border-radius: 3px;
+		font-size: 15px;
+		outline: none;
+		padding: 5px;
+		padding-left: 10px;
+		padding-right: 10px;
+		width: 250px;
+	}
+
+	form select {
+		font-size: 15px;
+		width: 210px;
+		padding: 5px;
+		border-radius: 3px;
+		-webkit-border-radius: 3px;
+		border: #88c4ca solid 1px;
+	}
+
+	form input:not([type=submit]):focus {
+		background: #eaeaea;
+		border: #88c4ca solid 2px;
+	}
+
+	form input[type=button] {
+		background: #88c4ca;
+		width: 100px;
+	}
+
+	.progress {
+		overflow: hidden;
+		height: 30px;
+		width: 210px;
+		background-color: #f7f7f7;
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#D3D3D3), to(#DCDCDC));
+		background-image: -webkit-linear-gradient(top, #D3D3D3, #DCDCDC);
+		background-image: linear-gradient(to bottom, #D3D3D3, #DCDCDC);
+		background-repeat: repeat-x;
+		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff5f5f5', endColorstr='#fff9f9f9', GradientType=0);
+		-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+		-webkit-border-radius: 4px;
+		border-radius: 4px;
+	}
+
+	.progress .bar {
+		height: 100%;
+		color: #000000;
+		float: left;
+		font-size: 14px;
+		text-align: center;
+		justify-content: center;
+		text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+		background-color: #0e90d2;
+		background-image: -moz-linear-gradient(top, #149bdf, #0480be);
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#149bdf), to(#0480be));
+		background-image: -webkit-linear-gradient(top, #149bdf, #0480be);
+		background-image: -o-linear-gradient(top, #149bdf, #0480be);
+		background-image: linear-gradient(to bottom, #149bdf, #0480be);
+		background-repeat: repeat-x;
+		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff149bdf', endColorstr='#ff0480be', GradientType=0);
+		-webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+		box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+		-webkit-box-sizing: border-box;
+		box-sizing: border-box;
+		-webkit-transition: width 0.1s ease;
+		transition: width 0.1s ease;
+	}
+
+	.inp {
+        border: none;
+        border-radius: 100%;
+        background: #cacaca;
+        width: 100px;
+        height: 100px;
+        margin: 5px 8px;
+    }
+
+	.ledstyle {
+
+		width:10.6px;
+		height:15px;
+
+		line-height:15px;
+
+		-webkit-border: #000000d3 solid 1px;
+		border: #000000d3 solid 1px;
+		
+
+		margin:1px;
+
+		padding:0px;
+
+		-webkit-background-color:grey;
+		background-color:grey;
+
+		-webkit-border-radius: 0px;
+		border-radius: 0px;
+
+		-webkit-background: grey;
+		background: grey;
+
+	}
+
+	.basicTable{
+		width: 100%;
+	}
+	.basicTable th {
+		line-height: 50px;
+	}
+	.basicTable td {
+		width: 25%;
+		text-align: center;
+		line-height: 30px;
+	}
+	.settingTable{
+		width: 100%;
+	}
+	.settingTable td{
+		width: 50%;
+		text-align: center;
+		line-height: 40px;
+		padding: 5px 0; 
+	}
+	.settingTable select{
+		width: 70%;
+		padding: 6px;
+		border-radius: 5px;
+	}
+	.settingTable input{
+		width: 50%;
+		padding: 6px;
+		border-radius: 5px;
+		border: 1px solid #ccc;
+		text-align: center;
+	}
+
+	button{
+		border: none;
+		width: 60%;
+		line-height: 35px;
+		border-radius: 5px;
+	}
+	.cancel,.reset{
+		background-color: #E50F29;
+		color: #fff;
+	}
+	.comfirm,.submit{
+		background-color: #3fb34f;
+		color: #fff;
+	}
+
+</style>
+<body>
+    <div class="container">
+        <div class="tab-wrap" id="tabOut">
+            <input type="radio" id="tab1" name="tabGroup1" class="tab" onclick="GetBase()">
+            <label for="tab1"><legend>Base</legend></label>
+			<!-- //////////////////////////////////////////////开发中，暂时屏蔽/////////////////////////////////////////////
+            <input type="radio" id="tab2" name="tabGroup1" class="tab" onclick="GetSetting()">
+            <label for="tab2"><legend>Setting</legend></label>
+			//////////////////////////////////////////////开发中，暂时屏蔽///////////////////////////////////////////// -->
+            <input type="radio" id="tab3" name="tabGroup1" class="tab" onclick="GetVersion()">
+            <label for="tab3"><legend>Upgrade</legend></label>
+			<div class="tab_content">
+                <form >
+                    <fieldset>
+                        <legend>Base</legend>
+							<ol>
+								<li>
+									<label>input:</label>
+									<input id="stringInput" style="text-align: left;">
+									<input type="button" value="OK" onclick="SetMessage()">
+								</li>
+								
+							</ol>
+						</table>
+
+                    </fieldset>
+                </form>
+            </div>
+			
+            <div class="tab_content">
+                <form action="URL" method="post">
+                    <fieldset>
+                        <legend>Upgrade</legend>
+                        <ol>
+							<li>
+                                <label>Module:</label>
+                                <span><label id="dev_model_id" style="text-align: right;"></label></span>
+                            </li>
+							<li>
+                                <label>SN:</label>
+                                <span><label id="SN_id" style="text-align: right;"></label></span>
+                            </li>
+							<li>
+                                <label>Boot Ver:</label>
+                                <span><label id="boot_ver_id" style="text-align: right;"></label></span>
+                            </li>
+                            <li>
+                                <label>ARM Ver:</label>
+                                <span><label id="arm_ver_id" style="text-align: right;"></label></span>
+                            </li>
+							<li>
+                                <label>DSP Ver:</label>
+                                <span><label id="dsp_ver_id" style="text-align: right;"></label></span>
+                            </li>
+							<li>
+                                <label>Wifi Ver:</label>
+                                <span><label id="wifi_ver_id" style="text-align: right;"></label></span>
+                            </li>
+                            <li>
+                                <label>Firmware Upgrade:</label>
+                                <span><input id="file" type="file" name="file" accept=".bin"></span>
+                            </li>
+							<li>
+								<label>Upgrade progress:</label>
+								<span>
+									<div class="progress"><div id="up_pro" class="bar" style="width: 0%;">0.0%</div></div>
+								</span>
+							</li>
+							<li style="text-align: center;">
+								<input type="button" id="upgrade" disabled="true" value="Start Upgrade">
+							</li>
+							<li>
+								<label>Upgrade Results:</label>
+								<label id="update_result"></label>
+							</li>
+                        </ol>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+	<script type="text/javascript">
+			function byteArrayToHexString(byteArray) {
+				return Array.from(byteArray, byte => {
+					return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+				}).join(' ');
+			}
+			function formatNumberToVersion(number) {
+				let numberString = number.toString();
+				while (numberString.length < 5) {
+					numberString = '0' + numberString;
+				}
+				let formattedVersion = 'V' + numberString.slice(0, 1) + '.' + numberString.slice(1, 3) + '.' + numberString.slice(3, 5);
+				return formattedVersion;
+			}
+			function formatNumberToInnerVersion(number){
+				let numberString = number.toString();
+				while (numberString.length < 4) {
+					numberString = '0' + numberString;
+				}
+				let formattedVersion = 'B' + numberString.slice(0, 2) + 'D' + numberString.slice(2, 4);
+				return formattedVersion;
+			}
+			function convertCapToPower(cap){
+				let power = "R"+Math.floor(cap/10)+"K"
+				let remainder = cap % 10
+				if(remainder > 0){
+					power += remainder
+				}
+				return power+"G2"
+			}
+			
+			
+			
+			/******************************************************************************************************/
+			function GetVersion() {
+				const dataBuffer = '{"pcsData":"pcs_info"}'
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST','/data.html')		
+				xhr.onreadystatechange = function () {
+					if(xhr.readyState == XMLHttpRequest.DONE){
+						let dev_model = document.querySelector("#dev_model_id");
+						let SN_Code = document.querySelector("#SN_id");
+						let boot_ver = document.querySelector("#boot_ver_id");
+						let arm_ver = document.querySelector("#arm_ver_id");
+						let dsp_ver = document.querySelector("#dsp_ver_id");
+						let wifi_ver = document.querySelector("#wifi_ver_id");
+						if(xhr.status == 200){
+							console.log(xhr.response);
+							const jsonResText = xhr.response
+							dev_model.textContent = convertCapToPower(jsonResText.dev_model)
+							SN_Code.textContent = jsonResText.SN_Code
+							boot_ver.textContent = formatNumberToVersion(jsonResText.boot_version)
+							arm_ver.textContent = formatNumberToVersion(jsonResText.arm_version)+formatNumberToInnerVersion(jsonResText.arm_innerVer)
+							dsp_ver.textContent = formatNumberToVersion(jsonResText.dsp_version)+formatNumberToInnerVersion(jsonResText.dsp_innerVer)
+							wifi_ver.textContent = jsonResText.wifi_version
+							//when get version get if upgrading now.
+							if(jsonResText.is_upgrading)
+							{
+								upgradeBtn.disabled = true;
+								fileInput.disabled = true;
+								intervalId = setInterval(sendQueryUpgradeProgress,10000);
+							}
+							else
+							{
+								upgradeBtn.disabled = false;
+								fileInput.disabled = false;
+							}
+						}else{
+							alert("get version failed")
+						}
+					}
+				}
+				xhr.responseType="json"
+				xhr.send(dataBuffer)
+			}
+			const fileInput = document.querySelector("#file");
+			let selectedFile = null
+			let fileName = null
+			let fileLength = 0
+			let fileByteArray = []
+			fileInput.addEventListener('change',async function(event){//upload file to wifi moudle
+				upgradeBtn.disabled = true;
+				selectedFile = event.target.files[0]
+				if(selectedFile){
+					fileName = selectedFile.name
+					if(!fileName.startsWith("hybrid_app") && !fileName.startsWith("HybridInverter5K_app")){
+						alert("Select the PCS manufacturer to upgrade the firmware")
+						return
+					}
+					if(!fileName.endsWith(".bin")){
+						alert("Select the.bin file")
+						return
+					}
+					if(fileName.endsWith("axf_cat_to.bin")){
+						alert("Do not select a composite file")
+						return
+					}
+
+					console.log("file length:"+selectedFile.size);
+					const xhr = new XMLHttpRequest();
+					
+					xhr.open('POST','/pcs.html')
+					// xhr.setRequestHeader("Content-Length",selectedFile.size)
+					// xhr.upload.onprogress = function(event){
+					// 	if(event.lengthComputable){
+					// 		const percentage = (event.loaded / event.total) * 100
+					// 		progressBar.style.width = percentage+'%'
+					// 		progressBar.innerHTML = percentage.toFixed(1)+'%'
+					// 		console.log("per"+percentage.textConent);
+					// 	}
+					// }
+
+					xhr.onreadystatechange = function () {
+						if(xhr.readyState == XMLHttpRequest.DONE){
+							if(xhr.status == 200){
+								upgradeBtn.disabled = false;
+								console.log(xhr.responseText);
+							}else if(xhr.status == 304){
+								console.error("file upload failed")
+								alert("Please seclect a correct bin file");
+							}
+						}
+					}
+					xhr.send(selectedFile)
+				}else{
+					console.log("no file selected")
+				}
+				progressBar.style.width = 0+'%'
+				progressBar.innerHTML = 0+'%'
+
+				return
+			})
+			const upgrade_step = ["START","ERASE","PROGRAM","VERIFY","RESTART"];
+			const upgrade_result_label = document.querySelector("#update_result")
+			function sendQueryUpgradeProgress(){
+				const dataBuffer = '{"pcsData":"upgrade_pro"}'
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST','/data.html')		
+				xhr.onreadystatechange = function () {
+					if(xhr.readyState == XMLHttpRequest.DONE){
+						if(xhr.status == 200){
+							console.log(xhr.response);
+							const jsonResText = xhr.response	
+							const percentage = jsonResText.upgrade_pro * 100
+							progressBar.style.width = percentage+'%'
+							progressBar.innerHTML = percentage.toFixed(2)+'%'
+							if(!jsonResText.is_upgrading){
+								if( jsonResText.upgrade_step == 4){
+									progressBar.style.width == 100+'%'
+									progressBar.innerHTML = 100+"%"
+									clearInterval(intervalId)
+									upgradeBtn.disabled = false;
+									fileInput.disabled = false;
+									upgrade_result_label.innerHTML = "upgrade scuessfully"
+									GetVersion()
+								}else{
+									clearInterval(intervalId)
+									let result_text = "STEP:"+upgrade_step[jsonResText.upgrade_step]+" PROC:"+percentage.toFixed(2)+"%"
+									result_text += " LEN:"+jsonResText.file_length+" ADDR:"+"0x"+jsonResText.program_addr.toString(16).toUpperCase()
+									result_text += " SEND:"+jsonResText.send_cnt+" ERROR ID:"+"0x"+jsonResText.err_code.toString(16).toUpperCase()
+									result_text += " RETURN CLASS:"+"0x"+jsonResText.return_class.toString(16).toUpperCase()
+
+									upgrade_result_label.innerHTML = result_text
+									upgradeBtn.disabled = false;
+									fileInput.disabled = false;
+								}
+							}							
+							
+						}else{
+							console.log("upgrade query failed");
+							clearInterval(intervalId)
+							upgrade_result_label.innerHTML = xhr.response
+							upgradeBtn.disabled = false;
+							fileInput.disabled = false;
+						}
+					}
+				}
+				xhr.responseType="json"
+				xhr.send(dataBuffer)
+			}
+			const upgradeBtn = document.querySelector("#upgrade")
+			const progressBar = document.querySelector("#up_pro")
+			let intervalId 
+			upgradeBtn.addEventListener('click',function(){
+				console.log("Click to upgrade")
+				if(!fileName || !selectedFile){
+					alert("Please select a file") 
+					return
+				}
+
+				upgrade_result_label.innerHTML = ""
+				
+				const dataBuffer = '{"pcsData":"start_upgrade"}'
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST','/data.html')		
+				xhr.onreadystatechange = function () {
+					if(xhr.readyState == XMLHttpRequest.DONE){
+						if(xhr.status == 200){
+							progressBar.style.width = 0+'%'
+							progressBar.innerHTML = 0+'%'
+
+							intervalId = setInterval(sendQueryUpgradeProgress,10000);
+							upgradeBtn.disabled = true;
+							fileInput.disabled = true;
+						}else{
+							alert("start upgrade cmd recv fail");
+						}
+					}
+				}
+				xhr.responseType="json"
+				xhr.send(dataBuffer)
+			})
+			/*******************************************************************************************************/
+			function GetBase() {
+				// const dataBuffer = '{"pcsData":"base"}'
+				// const xhr = new XMLHttpRequest();
+				// xhr.open('POST','/data.html')		
+				// xhr.onreadystatechange = function () {
+				// 	if(xhr.readyState == XMLHttpRequest.DONE){
+				// 		if(xhr.status == 200){
+				// 			console.log(xhr.response);
+				// 			const jsonResText = xhr.response;
+
+				// 			var data = jsonResText;
+				// 			let ArrayNum = data.length;
+							
+
+				// 		}else{
+				// 			alert("get base failed")
+				// 		}
+				// 	}
+				// }
+				
+				// xhr.responseType="json"
+				// xhr.send(dataBuffer)				
+			}
+			function SetMessage(){
+				const stringMsg = document.querySelector("#stringInput").value
+				//const dataBuffer = {'{"ESPData":"CustomMsg","Msg":stringMsg}'}
+				const dataBuffer = {
+					"ESPData":"CustomMsg",
+					"Msg":stringMsg,
+				};
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST','/data.html')		
+				xhr.onreadystatechange = function () {
+					if(xhr.readyState == XMLHttpRequest.DONE){
+						if(xhr.status == 200){
+							console.log(xhr.response);
+							const jsonResText = xhr.response;
+							alert("set scuessful")
+						}else{
+							alert("set failed")
+						}
+					}
+				}
+				
+				xhr.responseType="json"
+				xhr.send(JSON.stringify(dataBuffer))
+			}
+	</script>
+</body>
+</html>

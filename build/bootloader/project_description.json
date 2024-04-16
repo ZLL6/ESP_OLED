@@ -1,0 +1,20 @@
+{
+    "project_name":       "bootloader",
+    "project_path":       "E:/ESP/OLED/components/bootloader/subproject",
+    "build_dir":          "E:/ESP/OLED/build/bootloader",
+    "config_file":        "E:/ESP/OLED/sdkconfig",
+    "config_defaults":    "",
+    "app_elf":            "bootloader.elf",
+    "app_bin":            "bootloader.bin",
+    "git_revision":       "v4.3",
+    "target":             "esp32",
+    "phy_data_partition": "",
+    "monitor_baud" :      "115200",
+    "monitor_toolprefix": "xtensa-esp32-elf-",
+    "config_environment" : {
+        "COMPONENT_KCONFIGS" : "C:/ESP_IDF/components/efuse/Kconfig;C:/ESP_IDF/components/esp32/Kconfig;C:/ESP_IDF/components/esp_common/Kconfig;C:/ESP_IDF/components/esp_system/Kconfig;C:/ESP_IDF/components/log/Kconfig;C:/ESP_IDF/components/newlib/Kconfig;C:/ESP_IDF/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "E:/ESP/OLED/components/bootloader/Kconfig.projbuild;C:/ESP_IDF/components/esptool_py/Kconfig.projbuild;C:/ESP_IDF/components/partition_table/Kconfig.projbuild"
+    },
+    "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp32", "esp_common", "esp_hw_support", "esp_rom", "esp_system", "esptool_py", "hal", "log", "main", "micro-ecc", "newlib", "partition_table", "soc", "spi_flash", "xtensa", "" ],
+    "build_component_paths" : [ "E:/ESP/OLED/components/bootloader", "C:/ESP_IDF/components/bootloader_support", "C:/ESP_IDF/components/efuse", "C:/ESP_IDF/components/esp32", "C:/ESP_IDF/components/esp_common", "C:/ESP_IDF/components/esp_hw_support", "C:/ESP_IDF/components/esp_rom", "C:/ESP_IDF/components/esp_system", "C:/ESP_IDF/components/esptool_py", "C:/ESP_IDF/components/hal", "C:/ESP_IDF/components/log", "E:/ESP/OLED/components/bootloader/subproject/main", "E:/ESP/OLED/components/bootloader/subproject/components/micro-ecc", "C:/ESP_IDF/components/newlib", "C:/ESP_IDF/components/partition_table", "C:/ESP_IDF/components/soc", "C:/ESP_IDF/components/spi_flash", "C:/ESP_IDF/components/xtensa", "" ]
+}
